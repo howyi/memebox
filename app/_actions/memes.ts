@@ -5,6 +5,7 @@ import * as schema from "@/app/_db/schema";
 import {and, eq } from "drizzle-orm";
 import {auth} from "@/app/auth";
 import {revalidatePath} from "next/cache";
+import {nanoid} from "nanoid";
 
 export const fetchMemes = async (): Promise<typeof schema.memes.$inferSelect[]> => {
     const user = await authenticate()
@@ -16,9 +17,9 @@ export const fetchMemes = async (): Promise<typeof schema.memes.$inferSelect[]> 
 export const addMeme = async (formData: FormData) => {
     const user = await authenticate()
     const model: typeof schema.memes.$inferInsert = {
+        id: nanoid(),
         text: formData.get("text") as string,
         slackTeamId: user.teamId,
-        createdUserId: user.id,
     }
     await db.insert(schema.memes).values(model);
     revalidatePath("/");
@@ -26,7 +27,7 @@ export const addMeme = async (formData: FormData) => {
 
 export const deleteMeme = async (formData: FormData) => {
     const user = await authenticate()
-    const meme_id = Number(formData.get("meme_id"))
+    const meme_id = formData.get("meme_id") as string
     await db.delete(schema.memes)
         .where(and(eq(schema.memes.id, meme_id), eq(schema.memes.slackTeamId, user.teamId)))
     revalidatePath("/");
