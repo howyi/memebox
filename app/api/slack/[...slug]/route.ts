@@ -1,10 +1,10 @@
 import NextRouteHandlerReceiver from "@/app/api/slack/[...slug]/NextRouteHandlerReceiver";
 import {App, LinkUnfurls} from "@slack/bolt";
 import {db} from "@/app/_db/db";
-import {eq} from "drizzle-orm";
+import {and, eq} from "drizzle-orm";
 import {memes, teams} from "@/app/_db/schema";
-import {nanoid} from "nanoid";
-import * as schema from "@/app/_db/schema";
+import MarkovChain from "@hideokamoto/markov-chain-tiny";
+import {InsertMeme, NewMeme} from "@/app/_server/meme";
 
 export const dynamic = 'force-dynamic' // defaults to force-static
 
@@ -12,7 +12,7 @@ const baseApiPath = 'https://localhost:3001/api/slack'
 const oauthRedirectPath = '/oauth_redirect'
 const installPath = '/install'
 const eventPath = '/events'
-const loginRedirectUri = 'https://localhost:3001/memes'
+const loginRedirectUri = 'https://localhost:3001'
 
 const receiver = new NextRouteHandlerReceiver({
     signingSecret: process.env.SLACK_SIGNING_SECRET!,
@@ -95,9 +95,8 @@ app.event('reaction_added', async ({event, client, context}) => {
         return
     }
 
-    await db.insert(memes).values({
-        id: nanoid(),
-        slackTeamId: context.teamId,
+    await NewMeme({
+        slackTeamId: context.teamId!,
         url: permalink,
         text: conversations[0].text,
         author: user.profile?.display_name || user.real_name || user.name,
@@ -107,7 +106,7 @@ app.event('reaction_added', async ({event, client, context}) => {
 app.event('link_shared', async ({event, client, context}) => {
     console.log('link shared:', event)
 
-    const regMemeIdFromUrl = /memes\/([\w-]*)/
+    const regMemeIdFromUrl = /\/([\w-]*)/
 
     const unfurls: LinkUnfurls = {}
     for (const link of event.links) {
@@ -115,10 +114,10 @@ app.event('link_shared', async ({event, client, context}) => {
         if (!result) {
             return
         }
-        const memeId = result[1]
+        const memeId = result[0]
 
         const meme = await db.query.memes.findFirst({
-            where: eq(memes.id, memeId)
+            where: and(eq(memes.slackTeamId, context.teamId!), eq(memes.id, memeId))
         })
 
         if (!meme) {
@@ -128,7 +127,7 @@ app.event('link_shared', async ({event, client, context}) => {
         unfurls[link.url] = {
             color: '#1a9dab',
             author_name: meme.author || '発言者不明',
-            author_link: `${process.env.NEXTAUTH_URL}/memes/${meme.id}`,
+            author_link: `${process.env.NEXTAUTH_URL}/${meme.id}`,
             text: meme.text || '未設定',
         }
     }
@@ -140,7 +139,7 @@ app.event('link_shared', async ({event, client, context}) => {
     })
 })
 
-app.shortcut('add_meme', async ({shortcut, ack, client, logger}) => {
+app.shortcut('add_meme', async ({shortcut, ack, client, logger, context}) => {
     if (shortcut.type !== 'message_action') {
         return
     }
@@ -155,12 +154,19 @@ app.shortcut('add_meme', async ({shortcut, ack, client, logger}) => {
         return
     }
 
-    await db.insert(memes).values({
-        id: nanoid(),
-        slackTeamId: shortcut.team?.id,
+    const user = (await client.users.info({
+        user: shortcut.message.user!,
+    })).user
+
+    if (!user) {
+        return
+    }
+
+    await NewMeme({
+        slackTeamId: context.teamId!,
         url: permalink,
         text: shortcut.message.text,
-        author: shortcut.message.user,
+        author: user.profile?.display_name || user.real_name || user.name,
     })
 })
 
@@ -224,13 +230,11 @@ app.view('new_meme_submit', async ({
                                        body,
                                        view,
                                        client,
+                                        context,
                                        logger,
                                    }) => {
-    await ack()
-
-    const meme: typeof schema.memes.$inferInsert = {
-        id: nanoid(),
-        slackTeamId: body.team?.id,
+    const meme: InsertMeme = {
+        slackTeamId: context.teamId!,
         text: '',
         author: '',
     }
@@ -242,13 +246,10 @@ app.view('new_meme_submit', async ({
             meme.text = value.title.value
         }
     }
-    console.log('submit2', view.state.values)
+    const created = await NewMeme(meme)
 
-    await db.insert(memes).values(meme)
-
-    await client.views.update({
-        view_id: body.view.id,
-        hash: body.view.hash,
+    await ack({
+        response_action: 'update',
         view: {
             type: 'modal',
             title: {
@@ -261,7 +262,7 @@ app.view('new_meme_submit', async ({
                     type: "section",
                     text: {
                         type: "plain_text",
-                        text: `${process.env.NEXTAUTH_URL}/memes/${meme.id}`,
+                        text: created.permalink,
                         emoji: true
                     }
                 }
@@ -270,20 +271,98 @@ app.view('new_meme_submit', async ({
     })
 })
 
-app.command('/memebox2', async ({ command, ack, respond }) => {
+const COMMAND = '/memebox2'
+// テキストからコマンドと本文を取得する正規表現
+const regCommandFromText = /^(\w+)\s?(.*)$/
+app.command(COMMAND, async ({ command, respond, ack, body, context }) => {
+    console.log(command.text)
 
+
+    const result = regCommandFromText.exec(command.text)
+    if (result) {
+        const command = result[1] ?? ''
+        const commandBody = result[2] ?? ''
+
+        switch (command) {
+            case('add'): {
+                const meme = await NewMeme({
+                    slackTeamId: context.teamId!,
+                    text: commandBody,
+                    author: '',
+                })
+
+                await respond({
+                    response_type: 'ephemeral',
+                    text: `作成しました: ${process.env.NEXTAUTH_URL}/${meme.id}`,
+                })
+                return
+            }
+            case('markov'): {
+                const foundMemes = await db.query.memes.findMany({
+                    where: eq(memes.slackTeamId, context.teamId!)
+                })
+                if (foundMemes.length == 0) {
+                    await respond({
+                        response_type: 'ephemeral',
+                        text: `memes not found`,
+                    })
+                }
+                let text = ''
+                // 全部ではなくランダムで取得した100個のmemeから生成する
+                for (let i = 0; i < 100; i++) {
+                    const picked = foundMemes[Math.floor(Math.random() * foundMemes.length)]
+                    text += picked.text
+                }
+                const markov = new MarkovChain(text)
+                const sentence = markov.makeSentence()
+
+                await respond({
+                    response_type: 'in_channel',
+                    text: sentence
+                })
+                return
+            }
+            case('random'): {
+                const foundMemes = await db.query.memes.findMany({
+                    where: eq(memes.slackTeamId, context.teamId!)
+                })
+                if (foundMemes.length == 0) {
+                    await respond({
+                        response_type: 'ephemeral',
+                        text: `memes not found`,
+                    })
+                }
+
+                const picked = foundMemes[Math.floor(Math.random() * foundMemes.length)]
+                const linkText = picked.url ? picked.url : ""
+                await respond({
+                    response_type: 'in_channel',
+                    text: linkText,
+                    attachments: [
+                        {
+                            color: '#1a9dab',
+                            author_name: picked.author || '発言者不明',
+                            author_link: `${process.env.NEXTAUTH_URL}/${picked.id}`,
+                            text: picked.text || '未設定',
+                        },
+                    ]
+                })
+                return
+            }
+        }
+    }
     await respond({
         response_type: 'ephemeral',
-        text: ':wave: `/memebox`で様々なコマンドが使用できます :chicken: ',
+        text: `:wave: \`${COMMAND}\`で様々なコマンドが使用できます :chicken: `,
         attachments: [
             {
-                text: 'ミームを新しく追加する:\n `/memebox add [newMeme]`',
+                text: `ミームを新しく追加する:\`${COMMAND} add [newMeme]\``,
             },
             {
-                text: 'チーム内のミームをマルコフ連鎖した結果を投稿する:\n `/memebox markov`',
+                text: `チーム内のミームをマルコフ連鎖した結果を投稿する: \`${COMMAND} markov\``,
             },
             {
-                text: 'チーム内のミームをランダムに投稿する:\n `/memebox random`',
+                text: `チーム内のミームをランダムに投稿する: \`${COMMAND} random\``,
             }
         ]
     });

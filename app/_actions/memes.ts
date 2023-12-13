@@ -2,26 +2,25 @@
 
 import {db} from "@/app/_db/db";
 import * as schema from "@/app/_db/schema";
-import {and, eq } from "drizzle-orm";
+import {and, desc, eq} from "drizzle-orm";
 import {auth} from "@/app/auth";
 import {revalidatePath} from "next/cache";
-import {nanoid} from "nanoid";
+import {NewMeme} from "@/app/_server/meme";
 
 export const fetchMemes = async (): Promise<typeof schema.memes.$inferSelect[]> => {
     const user = await authenticate()
-    // @ts-ignore
-    return await db.query.memes.findMany({
-        where: eq(schema.memes.slackTeamId, user.teamId)
-    })
+    return db.query.memes.findMany({
+        where: eq(schema.memes.slackTeamId, user.teamId),
+        orderBy: [desc(schema.memes.created_at)],
+    });
 }
+
 export const addMeme = async (formData: FormData) => {
     const user = await authenticate()
-    const model: typeof schema.memes.$inferInsert = {
-        id: nanoid(),
+    await NewMeme( {
         text: formData.get("text") as string,
         slackTeamId: user.teamId,
-    }
-    await db.insert(schema.memes).values(model);
+    });
     revalidatePath("/");
 }
 

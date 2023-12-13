@@ -6,7 +6,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: memebox
-      TZ: 'Asia/Tokyo'
+      TZ: 'UTC'
     restart: always
     ports:
       - 3336:3306

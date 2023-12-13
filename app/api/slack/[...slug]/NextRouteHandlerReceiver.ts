@@ -287,7 +287,6 @@ export default class NextRouteHandlerReceiver implements Receiver {
             }
 
             if (path == this.eventPath) {
-
                 const body = this.parseRequestBody(
                     rawBody,
                     req.headers.get("content-type")!,
@@ -320,27 +319,11 @@ export default class NextRouteHandlerReceiver implements Receiver {
                     return NextResponse.json({challenge: body.challenge})
                 }
 
-                // Setup ack timeout warning
-                let isAcknowledged = false;
-                const noAckTimeoutId = setTimeout(() => {
-                    if (!isAcknowledged) {
-                        this.logger.error(
-                            'An incoming event was not acknowledged within 3 seconds. ' +
-                            'Ensure that the ack() argument is called in a listener.',
-                        );
-                    }
-                }, 3001);
-
                 // Structure the ReceiverEvent
                 let storedResponse;
                 const event: ReceiverEvent = {
                     body,
                     ack: async (response) => {
-                        if (isAcknowledged) {
-                            throw new ReceiverMultipleAckError();
-                        }
-                        isAcknowledged = true;
-                        clearTimeout(noAckTimeoutId);
                         if (typeof response === 'undefined' || response == null) {
                             storedResponse = '';
                         } else {
@@ -352,17 +335,17 @@ export default class NextRouteHandlerReceiver implements Receiver {
                 };
 
                 try {
-                    this.logger.warn(event)
-                    this.logger.warn(this.app)
+                    // this.logger.warn(event)
+                    // this.logger.warn(this.app)
                     await this.app?.processEvent(event);
-                    this.logger.warn(storedResponse)
+                    console.log('storedResponse', storedResponse)
                     if (storedResponse !== undefined) {
                         if (typeof storedResponse === 'string') {
-                            return NextResponse.json(storedResponse, {status: 200});
+                            return new NextResponse(storedResponse, {status: 200});
                         }
-                        return NextResponse.json(JSON.stringify(storedResponse), {status: 200});
+                        return NextResponse.json(storedResponse, {status: 200});
                     }
-                    /// TODO
+                    return new NextResponse('', {status:200});
                 } catch (err) {
                     this.logger.error('An unhandled error occurred while Bolt processed an event');
                     this.logger.debug(`Error details: ${err}, storedResponse: ${storedResponse}`);

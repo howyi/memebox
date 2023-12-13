@@ -7,7 +7,7 @@ import {
     uniqueIndex,
     varchar,
     primaryKey,
-    text, json
+    text, json, datetime
 } from 'drizzle-orm/mysql-core';
 import type { AdapterAccount } from "@auth/core/adapters"
 import {Installation} from "@slack/bolt";
@@ -34,10 +34,11 @@ export const memes = mysqlTable(
     'memes',
     {
         id: varchar("id", { length: 255 }).primaryKey(),
-        slackTeamId: varchar("slackTeamId", { length: 255 }),
+        slackTeamId: varchar("slackTeamId", { length: 255 }).notNull(),
         author: text("author"),
         text: text("text"),
         url: varchar("url", { length: 255 }).unique(),
+        created_at: datetime("created_at").notNull(),
     },
 );
 

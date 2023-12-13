@@ -32,6 +32,6 @@ async function* makeIterator() {
 }
 
 export async function POST() {
-    await sleep(1000)
-    return NextResponse.json({body: 'one minute'})
+    await sleep(4000)
+    return NextResponse.json({body: 'four secound'})
 }
