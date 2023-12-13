@@ -271,7 +271,7 @@ app.view('new_meme_submit', async ({
     })
 })
 
-const COMMAND = '/memebox2'
+const COMMAND = '/memebox'
 // テキストからコマンドと本文を取得する正規表現
 const regCommandFromText = /^(\w+)\s?(.*)$/
 app.command(COMMAND, async ({ command, respond, ack, body, context }) => {

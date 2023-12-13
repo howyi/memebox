@@ -6,7 +6,7 @@ import {Button} from "@/app/_components/ui/button"
 import {CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter} from "@/app/_components/ui/card"
 import {deleteMeme, fetchMemes} from "@/app/_actions/memes";
 import {AddMemeForm} from "@/app/_components/AddMemeForm";
-import {PlusIcon, TrashIcon} from "@heroicons/react/20/solid";
+import {LinkIcon, PlusIcon, TrashIcon} from "@heroicons/react/20/solid";
 
 export const MemesPage = async () => {
     const memes = await fetchMemes()
@@ -42,7 +42,17 @@ export const MemesPage = async () => {
                             </CardContent>
                             <CardFooter className="flex flex-col items-start p-4">
                                 <CardTitle className="text-sm font-light">
-                                    {ConvertJST(meme.created_at)}
+                                    {meme.url &&
+                                        <a href={meme.url}>
+                                            <button
+                                                type="submit"
+                                                className="rounded-full p-1 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                            >
+                                                <LinkIcon className="h-5 w-5" aria-hidden="true" />
+                                            </button>
+                                        </a>
+                                    }{ConvertJST(meme.created_at)}
+
                                     <form action={deleteMeme}>
                                         <input
                                             type="hidden"
@@ -60,12 +70,12 @@ export const MemesPage = async () => {
                                 </CardTitle>
                             </CardFooter>
                         </Card>
-                    ))}
+                        ))}
 
                 </div>
             </main>
         </div>
-    )
+)
 }
 
 const ConvertJST = (date: Date) => {
