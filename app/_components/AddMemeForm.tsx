@@ -2,6 +2,7 @@
 
 import React from "react";
 import {addMeme} from "@/app/_actions/memes";
+import {Button} from "@/app/_components/ui/button";
 
 export const AddMemeForm: React.FC = () => {
     const ref = React.useRef<HTMLFormElement>(null)
@@ -35,12 +36,6 @@ export const AddMemeForm: React.FC = () => {
                 disabled={disabled}
             />
         </div>
-        <button
-            type="submit"
-            disabled={disabled}
-            className="w-[150px] justify-center relative -ml-px inline-flex text-white bg-indigo-600 items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold hover:bg-indigo-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-400"
-        >
-            {disabled ? '追加中' : '追加'}
-        </button>
+        <Button type={'submit'} disabled={disabled} className="bg-green-500 text-white">{disabled ? '追加中' : '追加'}</Button>
     </form>
 }

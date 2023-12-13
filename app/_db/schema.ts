@@ -7,9 +7,10 @@ import {
     uniqueIndex,
     varchar,
     primaryKey,
-    text
+    text, json, datetime
 } from 'drizzle-orm/mysql-core';
 import type { AdapterAccount } from "@auth/core/adapters"
+import {Installation} from "@slack/bolt";
 
 export const user_slack_teams = mysqlTable(
     'user_slack_teams',
@@ -25,23 +26,19 @@ export const teams = mysqlTable(
     'teams',
     {
         id: varchar('id', { length: 255 }).primaryKey().notNull(),
-        access_token: text("access_token"),
-        bot_user_id: text("bot_user_id"),
-        incoming_webhook_channel_id: text("incoming_webhook_channel_id"),
-        incoming_webhook_channel_name: text("incoming_webhook_channel_name"),
-        incoming_webhook_configuration_url: text("incoming_webhook_configuration_url"),
-        incoming_webhook_url: text("incoming_webhook_url"),
+        installation: json('installation').$type<Installation>(),
     },
 );
 
 export const memes = mysqlTable(
     'memes',
     {
-        id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
-        slackTeamId: varchar("slackTeamId", { length: 255 }),
-        createdUserId: varchar("createdUserId", { length: 255 }),
+        id: varchar("id", { length: 255 }).primaryKey(),
+        slackTeamId: varchar("slackTeamId", { length: 255 }).notNull(),
+        author: text("author"),
         text: text("text"),
-        url: text("url"),
+        url: varchar("url", { length: 255 }).unique(),
+        created_at: datetime("created_at").notNull(),
     },
 );
 
