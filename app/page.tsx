@@ -1,6 +1,7 @@
 import {Button} from "@/app/_components/ui/button";
 import {auth} from "@/app/auth";
 import {MemesPage} from "@/app/_components/memes-page";
+import {fetchMemes, getMeme} from "@/app/_actions/memes";
 
 export default async function Home() {
     const session = await auth()
@@ -21,8 +22,8 @@ export default async function Home() {
             </div>
         )
     }
-
+    const memes = await fetchMemes()
   return (
-      <MemesPage />
+      <MemesPage memes={memes}/>
   )
 }

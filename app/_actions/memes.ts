@@ -6,6 +6,7 @@ import {and, desc, eq} from "drizzle-orm";
 import {auth} from "@/app/auth";
 import {revalidatePath} from "next/cache";
 import {NewMeme} from "@/app/_server/meme";
+import {redirect} from "next/navigation";
 
 export const fetchMemes = async (): Promise<typeof schema.memes.$inferSelect[]> => {
     const user = await authenticate()
@@ -14,6 +15,17 @@ export const fetchMemes = async (): Promise<typeof schema.memes.$inferSelect[]> 
         orderBy: [desc(schema.memes.created_at)],
         limit: 100,
     });
+}
+
+export const getMeme = async (memeId: string): Promise<typeof schema.memes.$inferSelect> => {
+    const user = await authenticate()
+    const found = await db.query.memes.findFirst({
+        where: and(eq(schema.memes.slackTeamId, user.teamId), eq(schema.memes.id, memeId) ),
+    });
+    if (!found) {
+        throw new Error('not found')
+    }
+    return found
 }
 
 export const addMeme = async (formData: FormData) => {
@@ -30,7 +42,18 @@ export const deleteMeme = async (formData: FormData) => {
     const meme_id = formData.get("meme_id") as string
     await db.delete(schema.memes)
         .where(and(eq(schema.memes.id, meme_id), eq(schema.memes.slackTeamId, user.teamId)))
-    revalidatePath("/");
+    redirect("/");
+}
+
+export const updateMeme = async (memeId: string, text: string, author: string) => {
+    const user = await authenticate()
+    await db.update(schema.memes).set({
+        id: memeId,
+        slackTeamId: user.teamId,
+        text,
+        author,
+    }).where(and (eq(schema.memes.id, memeId), eq(schema.memes.slackTeamId, user.teamId)));
+    revalidatePath("/" + memeId);
 }
 
 const authenticate = async (): Promise<{ teamId:string, id:string }> => {
