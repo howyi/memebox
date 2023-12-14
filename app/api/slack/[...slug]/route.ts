@@ -106,7 +106,7 @@ app.event('reaction_added', async ({event, client, context}) => {
 app.event('link_shared', async ({event, client, context}) => {
     console.log('link shared:', event)
 
-    const regMemeIdFromUrl = /\/([\w-]*)/
+    const regMemeIdFromUrl = /.app\/([\w-]*)/
 
     const unfurls: LinkUnfurls = {}
     for (const link of event.links) {
@@ -114,7 +114,7 @@ app.event('link_shared', async ({event, client, context}) => {
         if (!result) {
             return
         }
-        const memeId = result[0]
+        const memeId = result[1]
 
         const meme = await db.query.memes.findFirst({
             where: and(eq(memes.slackTeamId, context.teamId!), eq(memes.id, memeId))
