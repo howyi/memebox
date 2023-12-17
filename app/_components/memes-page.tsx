@@ -58,8 +58,8 @@ export const MemesPage: React.FC<{ memes: Meme[], selectedMeme?: Meme }> = ({mem
                             }}
                             key={meme.id}
                         >
-                            <CardHeader className="flex flex-col items-start p-4 h-52 overflow-y-scroll">
-                                <CardTitle className="text-md font-bold">{meme.text || ''}</CardTitle>
+                            <CardHeader className="flex flex-col items-start p-4 h-52 overflow-y-auto">
+                                <CardTitle className="text-md font-bold whitespace-pre-line">{meme.text || ''}</CardTitle>
                             </CardHeader>
                             <CardContent className="pb-2 px-4">
                                 <p className="mb-2 text-xs">{meme.author || ''}</p>
