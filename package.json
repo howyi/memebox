@@ -9,11 +9,7 @@
     "dev:db": "docker compose up db",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:push": "drizzle-kit push:mysql",
-    "db:migrate:generate-auto": "drizzle-kit generate:mysql",
-    "db:migrate:generate-custom": "drizzle-kit generate:mysql --custom",
-    "db:migrate:up": "node --require esbuild-register scripts/migrate.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^0.3.9",
