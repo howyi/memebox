@@ -31,24 +31,12 @@ export const MemesPage: React.FC<{ memes: Meme[], selectedMeme?: Meme }> = ({mem
 
     return (
         <div className="flex flex-col h-screen bg-white">
-            <header className="flex items-center justify-between p-6 bg-green-500 shadow">
-                <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold text-white">memebox</h1>
-                </div>
-                <div className="flex items-center">
-                    <a href={'/api/slack/install'}>
-                        <Button className="ml-2 bg-white text-green-500">Update Slack Webhooks</Button></a>
-                    <a href={'/api/auth/signout'}>
-                        <Button className="ml-2 bg-white text-green-500">Sign Out</Button>
-                    </a>
-                </div>
-            </header>
             <main className="flex-1 overflow-y-auto p-6">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-green-500">Memes</h2>
+                    <h2 className="text-xl font-semibold text-emerald-300">Memes</h2>
                     <AddMemeForm/>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-8">
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-6 xl:grid-cols-8">
 
                     {memes.map((meme) => (
                         <Card
@@ -58,8 +46,8 @@ export const MemesPage: React.FC<{ memes: Meme[], selectedMeme?: Meme }> = ({mem
                             }}
                             key={meme.id}
                         >
-                            <CardHeader className="flex flex-col items-start p-4 h-52 overflow-y-auto">
-                                <CardTitle className="text-md font-bold whitespace-pre-line">{meme.text || ''}</CardTitle>
+                            <CardHeader className="flex flex-col items-start p-4 h-24 overflow-y-auto">
+                                <CardTitle className="text-sm font-bold whitespace-pre-line">{meme.text || ''}</CardTitle>
                             </CardHeader>
                             <CardContent className="pb-2 px-4">
                                 <p className="mb-2 text-xs">{meme.author || ''}</p>

@@ -36,6 +36,6 @@ export const AddMemeForm: React.FC = () => {
                 disabled={disabled}
             />
         </div>
-        <Button type={'submit'} disabled={disabled} className="bg-green-500 text-white">{disabled ? '追加中' : '追加'}</Button>
+        <Button type={'submit'} disabled={disabled} className="bg-emerald-300 text-white">{disabled ? '追加中' : '追加'}</Button>
     </form>
 }
