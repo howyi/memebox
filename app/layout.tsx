@@ -2,7 +2,7 @@ import type {Metadata} from 'next'
 import {Inter} from 'next/font/google'
 import './globals.css'
 import {Button} from "@/app/_components/ui/button";
-import {Top} from "@/app/_components/top";
+import {MegaphoneIcon, Top} from "@/app/_components/top";
 import {auth} from "@/app/auth";
 import React from "react";
 
@@ -24,11 +24,12 @@ export default async function RootLayout({
         <html lang="en">
             <body className={inter.className}>
                 <header className="flex items-center justify-between p-6 bg-emerald-300 shadow">
-                    <div className="flex items-center gap-2">
-                        <a href={'/'}>
+                    <a href={'/'}>
+                        <div className="flex items-center gap-2">
+                            <MegaphoneIcon className="h-8 w-8"/>
                             <h1 className="text-2xl font-bold text-white">memebox</h1>
-                        </a>
-                    </div>
+                        </div>
+                    </a>
                     {!session &&
                         <div className="flex items-center">
                             <a href={'/api/auth/signin'}>

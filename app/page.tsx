@@ -1,4 +1,3 @@
-import {Button} from "@/app/_components/ui/button";
 import {auth} from "@/app/auth";
 import {MemesPage} from "@/app/_components/memes-page";
 import {fetchMemes, getMeme} from "@/app/_actions/memes";
