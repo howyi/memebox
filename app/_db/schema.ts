@@ -1,16 +1,14 @@
 import {
     int,
     timestamp,
-    mysqlEnum,
-    mysqlTable,
-    bigint,
-    uniqueIndex,
     varchar,
     primaryKey,
-    text, json, datetime
+    text, json, datetime, mysqlTableCreator
 } from 'drizzle-orm/mysql-core';
 import type { AdapterAccount } from "@auth/core/adapters"
 import {Installation} from "@slack/bolt";
+
+export const mysqlTable = mysqlTableCreator((name) => `memebox_${name}`);
 
 export const user_slack_teams = mysqlTable(
     'user_slack_teams',
