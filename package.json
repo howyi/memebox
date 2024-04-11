@@ -3,15 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push:pg"
   },
   "dependencies": {
+    "@clerk/nextjs": "^4.29.12",
+    "@hideokamoto/markov-chain-tiny": "^0.1.0",
+    "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-slot": "^1.0.2",
     "@slack/bolt": "^3.17.1",
+    "@slack/webhook": "^7.0.2",
     "@vercel/postgres": "^0.8.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
