@@ -8,7 +8,7 @@ import * as schema from "@/drizzle/schema";
 import {NewMeme} from "@/backend/new-meme";
 import {auth, clerkClient} from "@clerk/nextjs";
 import {OauthAccessToken} from "@clerk/backend";
-import {TeamInfoResponse} from "@slack/web-api";
+import {OpenIDConnectUserInfoResponse, TeamInfoResponse, UsersProfileGetResponse} from "@slack/web-api";
 
 export const fetchMemes = async (): Promise<typeof schema.memes.$inferSelect[]> => {
     const user = await authenticate()
@@ -65,17 +65,17 @@ const authenticate = async (): Promise<{ teamId:string, id:string }> => {
     }
     const clerkAccessTokenResponse = await clerkClient.users.getUserOauthAccessToken(userId, 'oauth_slack') as OauthAccessToken[];
     for (let oauthAccessToken of clerkAccessTokenResponse) {
-        const slackTeamInfoResponse = await fetch('https://slack.com/api/team.info', {
+        const slackConnectInfoResponse = await fetch('https://slack.com/api/openid.connect.userInfo', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${oauthAccessToken.token}`
             }
         })
-        const teamInfo = await slackTeamInfoResponse.json() as TeamInfoResponse
-        if (teamInfo.team?.id === undefined) {
+        const userInfo = await slackConnectInfoResponse.json() as OpenIDConnectUserInfoResponse
+        if (userInfo["https://slack.com/team_id"] === undefined) {
             continue
         }
-        return {id: userId, teamId: teamInfo.team.id}
+        return {id: userId, teamId: userInfo["https://slack.com/team_id"]}
     }
     throw new Error("Unauthenticated")
 }
